@@ -97,6 +97,7 @@ func handleTextSplit(w http.ResponseWriter, r *http.Request) {
 
 func handleStats(w http.ResponseWriter, r *http.Request) {
 	cnt.AddRequest()
+	log.Printf("Request %d: %s", cnt.Requests, r.URL.Path)
 	// Return the statistics as JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -106,6 +107,7 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/split", handleTextSplit)
 	http.HandleFunc("/stats", handleStats)
-	address := "127.0.0.1:" + strconv.Itoa(port)
+	address := "0.0.0.0:" + strconv.Itoa(port)
+	log.Printf("Listening on %s", address)
 	http.ListenAndServe(address, nil)
 }
