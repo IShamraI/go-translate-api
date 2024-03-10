@@ -1,6 +1,10 @@
 version: '3'
 services:
   go-translate:
-    build: .
+    build:
+      dockerfile: Dockerfile
+      context: .
+    # volumes:
+      # - .:/opt/app
     ports:
       - "8080:8080"

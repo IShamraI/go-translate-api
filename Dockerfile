@@ -1,11 +1,11 @@
 # Use the official Golang image to create a build artifact.
-FROM golang:1.16 AS builder
+FROM golang:1.20 AS builder
 
 # Create a working directory inside the container.
 WORKDIR /app
 
 # Copy the Go modules files.
-COPY go.mod go.sum ./
+COPY go.mod ./
 
 # Download the Go dependencies.
 RUN go mod download
