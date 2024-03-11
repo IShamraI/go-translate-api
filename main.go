@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,6 +20,19 @@ var (
 
 	translateService *googletranslate.GTranslateService = googletranslate.NewRuEn()
 )
+
+type Response struct {
+	Text  string `json:"text"`
+	Error string `json:"error"`
+}
+
+func (r *Response) ToJson() []byte {
+	jsonData, err := json.Marshal(r)
+	if err != nil {
+		return []byte(`{"error": "Error marshalling json"}`)
+	}
+	return jsonData
+}
 
 func init() {
 	flag.IntVar(&port, "port", 8080, "Port number for the service to listen on")
@@ -75,24 +90,23 @@ func handleTextSplit(w http.ResponseWriter, r *http.Request) {
 	// Return the split chunks as a JSON array
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("["))
-	for i, chunk := range chunks {
+
+	var response Response
+	for _, chunk := range chunks {
+		if len(chunk) == 0 {
+			continue
+		}
 		tChunk, err := translateService.Translate(chunk)
 		if err != nil {
 			log.Printf("Error translating chunk: %s", err)
+			response.Error = fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
+			response.Text = ""
+			break
 		}
-
-		if i > 0 {
-			w.Write([]byte(","))
-		}
-		if err != nil {
-			w.Write([]byte(`"` + err.Error() + `"`))
-		} else {
-			w.Write([]byte(`"` + tChunk + `"`))
-		}
+		response.Text += fmt.Sprintf(" %s", tChunk)
 		time.Sleep(time.Duration(500) * time.Millisecond) // Add a 500ms delay between chunks
 	}
-	w.Write([]byte("]"))
+	w.Write(response.ToJson())
 }
 
 func handleStats(w http.ResponseWriter, r *http.Request) {
